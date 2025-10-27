@@ -73,7 +73,7 @@ func TestCafeCount(t *testing.T) {
 		{0, 0},
 		{1, 1},
 		{2, 2},
-		{100, 100},
+		{100, min(cafeListLen, 100)},
 	}
 	for _, v := range requests {
 		response := httptest.NewRecorder()
@@ -86,11 +86,7 @@ func TestCafeCount(t *testing.T) {
 		rsSize := checkRsSize(rs)
 
 		require.Equal(t, http.StatusOK, response.Code)
-		if v.count == 100 {
-			assert.Equal(t, cafeListLen, rsSize)
-		} else {
-			assert.Equal(t, v.want, rsSize)
-		}
+		assert.Equal(t, v.want, rsSize)
 	}
 }
 
@@ -116,14 +112,17 @@ func TestCafeSearch(t *testing.T) {
 		handler.ServeHTTP(response, request)
 
 		responseLower := strings.ToLower(response.Body.String())
-
-		require.Equal(t, http.StatusOK, response.Code)
-
 		rsSize := checkRsSize(responseLower)
 
-		if rsSize != 0 {
-			assert.True(t, strings.Contains(responseLower, v.search))
-		}
+		require.Equal(t, http.StatusOK, response.Code)
 		assert.Equal(t, v.wantCount, rsSize)
+
+		if rsSize != 0 {
+			split := strings.Split(responseLower, ",")
+
+			for _, s := range split {
+				assert.Contains(t, s, v.search)
+			}
+		}
 	}
 }
